@@ -4,6 +4,8 @@
 #include "arithmatoy.h"
 #include "utils.h"
 
+int VERBOSE;
+
 int main(int argc, const char *argv[]) {
   if (argc < 5) {
     fprintf(
