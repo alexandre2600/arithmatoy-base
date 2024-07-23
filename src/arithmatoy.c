@@ -5,41 +5,227 @@
 
 #include "utils.h"
 
-const size_t ALL_DIGIT_COUNT = 36;
-
-#define VERBOSE 0
+int VERBOSE = 0;
 
 const char *get_all_digits() { return "0123456789abcdefghijklmnopqrstuvwxyz"; }
+const size_t ALL_DIGIT_COUNT = 36;
 
 void arithmatoy_free(char *number) { free(number); }
 
-char *init_buffer(size_t size) {
-  char *buffer = (char *)malloc(size + 1);
-  if (buffer) {
-    memset(buffer, '0', size);
-    buffer[size] = '\0';
+char *arithmatoy_add(unsigned int base, const char *lhs, const char *rhs) {
+  if (VERBOSE) {
+    fprintf(stderr, "add %u %s %s --verbose\n", base, lhs, rhs);
+  }
+
+  char *lhslog = strdup(lhs);
+  char *rhslog = strdup(rhs);
+
+  if (lhs == NULL && rhs == NULL) {
+    return NULL;
+  }
+
+  if (rhs == NULL) {
+    return strdup(lhs);
+  }
+
+  if (lhs == NULL) {
+    return strdup(rhs);
+  }
+
+  lhs = drop_leading_zeros(lhs);
+  rhs = drop_leading_zeros(rhs);
+
+  lhs = reverse(strdup(lhs));
+  rhs = reverse(strdup(rhs));
+
+  const size_t lhs_length = strlen(lhs);
+  const size_t rhs_length = strlen(rhs);
+  const size_t max_length = lhs_length > rhs_length ? lhs_length : rhs_length;
+  const size_t buffer_length = max_length + 2; // +1 for carry, +1 for \0
+  char *buffer = (char *)malloc(buffer_length * sizeof(char));
+
+  unsigned int retenue = 0;
+  unsigned int i = 0;
+
+  while (i < max_length) {
+    unsigned int lhs_digit = i < lhs_length ? get_digit_value(lhs[i]) : 0;
+    unsigned int rhs_digit = i < rhs_length ? get_digit_value(rhs[i]) : 0;
+    unsigned int sum = lhs_digit + rhs_digit + retenue;
+    retenue = sum / base;
+    buffer[i] = to_digit(sum % base);
+    ++i;
+  }
+
+  if (retenue > 0) {
+    buffer[i] = to_digit(retenue);
+    ++i;
+  }
+
+  buffer[i] = '\0';
+  buffer = reverse(buffer);
+  buffer = (char *)drop_leading_zeros(buffer);
+  if (VERBOSE) {
+    fprintf(stderr, "%s + %s = %s\n", lhslog, rhslog, buffer);
+    fprintf(stderr, "add: entering function\n");
   }
   return buffer;
+
+  // Fill the function, the goal is to compute lhs + rhs
+  // You should allocate a new char* large enough to store the result as a
+  // string Implement the algorithm Return the result
 }
 
-char to_digit(unsigned int val) {
-  if (val < 10) {
-    return '0' + val;
-  } else if (val < 36) {
-    return 'a' + (val - 10);
+char *arithmatoy_sub(unsigned int base, const char *lhs, const char *rhs) {
+  if (VERBOSE) {
+    fprintf(stderr, "sub %u %s %s --verbose\n", base, lhs, rhs);
   }
-  return '0';
+
+  char *lhslog = strdup(lhs);
+  char *rhslog = strdup(rhs);
+
+  if (lhs == NULL && rhs == NULL) {
+    return NULL;
+  }
+
+  if (rhs == NULL) {
+    return strdup(lhs);
+  }
+
+  if (lhs == NULL) {
+    return strdup(rhs);
+  }
+
+  lhs = drop_leading_zeros(lhs);
+  rhs = drop_leading_zeros(rhs);
+
+  if (strlen(lhs) < strlen(rhs) ||
+      strlen(lhs) == strlen(rhs) &&
+          (get_digit_value(lhs[0]) < get_digit_value(rhs[0]))) {
+    return NULL;
+  }
+
+  lhs = reverse(strdup(lhs));
+  rhs = reverse(strdup(rhs));
+
+  const size_t lhs_length = strlen(lhs);
+  const size_t rhs_length = strlen(rhs);
+  const size_t max_length = lhs_length > rhs_length ? lhs_length : rhs_length;
+  const size_t buffer_length = max_length + 1; // +1 for \0 (no carry)
+  char *buffer = (char *)malloc(buffer_length * sizeof(char));
+
+  unsigned int retenue = 0;
+  unsigned int i = 0;
+
+  while (i < max_length) {
+    unsigned int lhs_digit = i < lhs_length ? get_digit_value(lhs[i]) : 0;
+    unsigned int rhs_digit = i < rhs_length ? get_digit_value(rhs[i]) : 0;
+    int diff = lhs_digit - rhs_digit - retenue;
+    if (diff < 0) {
+      retenue = 1;
+      diff += base;
+    } else {
+      retenue = 0;
+    }
+    buffer[i] = to_digit(diff);
+    ++i;
+  }
+
+  buffer[i] = '\0';
+  buffer = reverse(buffer);
+  buffer = (char *)drop_leading_zeros(buffer);
+  if (VERBOSE) {
+    fprintf(stderr, "%s - %s = %s\n", lhslog, rhslog, buffer);
+    fprintf(stderr, "sub: entering function\n");
+  }
+  return buffer;
+
+  // Fill the function, the goal is to compute lhs - rhs (assuming lhs > rhs)
+  // You should allocate a new char* large enough to store the result as a
+  // string Implement the algorithm Return the result
 }
 
-unsigned int get_digit_value(char c) {
-  if (c >= '0' && c <= '9') {
-    return c - '0';
-  } else if (c >= 'a' && c <= 'z') {
-    return 10 + c - 'a';
-  } else if (c >= 'A' && c <= 'Z') {
-    return 10 + c - 'A';
+char *arithmatoy_mul(unsigned int base, const char *lhs, const char *rhs) {
+  if (VERBOSE) {
+    fprintf(stderr, "mul %u %s %s --verbose\n", base, lhs, rhs);
   }
-  return 0;
+
+  char *lhslog = strdup(lhs);
+  char *rhslog = strdup(rhs);
+
+  if (lhs == NULL && rhs == NULL) {
+    return NULL;
+  }
+
+  if (rhs == NULL) {
+    return strdup(lhs);
+  }
+
+  if (lhs == NULL) {
+    return strdup(rhs);
+  }
+
+  lhs = drop_leading_zeros(lhs);
+  rhs = drop_leading_zeros(rhs);
+
+  lhs = reverse(strdup(lhs));
+  rhs = reverse(strdup(rhs));
+
+  const size_t lhs_length = strlen(lhs);
+  const size_t rhs_length = strlen(rhs);
+  const size_t buffer_length = lhs_length + rhs_length + 1; // +1 for \0
+  char *buffer = (char *)malloc(buffer_length * sizeof(char));
+
+  for (size_t i = 0; i < buffer_length; ++i) {
+    buffer[i] = '0';
+  }
+
+  for (size_t i = 0; i < lhs_length; ++i) {
+    unsigned int lhs_digit = get_digit_value(lhs[i]);
+    unsigned int retenue = 0;
+    for (size_t j = 0; j < rhs_length; ++j) {
+      unsigned int rhs_digit = get_digit_value(rhs[j]);
+      unsigned int product = lhs_digit * rhs_digit + retenue + get_digit_value(buffer[i + j]);
+      retenue = product / base;
+      buffer[i + j] = to_digit(product % base);
+    }
+    buffer[i + rhs_length] = to_digit(retenue);
+  }
+
+  buffer[buffer_length - 1] = '\0';
+  buffer = reverse(buffer);
+  buffer = (char *)drop_leading_zeros(buffer);
+  if (VERBOSE) {
+    fprintf(stderr, "%s * %s = %s\n", lhslog, rhslog, buffer);
+    fprintf(stderr, "mul: entering function\n");
+  }
+  return buffer;
+
+  // Fill the function, the goal is to compute lhs * rhs
+  // You should allocate a new char* large enough to store the result as a
+  // string Implement the algorithm Return the result
+}
+
+// Here are some utility functions that might be helpful to implement add, sub
+// and mul:
+
+unsigned int get_digit_value(char digit) {
+  // Convert a digit from get_all_digits() to its integer value
+  if (digit >= '0' && digit <= '9') {
+    return digit - '0';
+  }
+  if (digit >= 'a' && digit <= 'z') {
+    return 10 + (digit - 'a');
+  }
+  return -1;
+}
+
+char to_digit(unsigned int value) {
+  // Convert an integer value to a digit from get_all_digits()
+  if (value >= ALL_DIGIT_COUNT) {
+    debug_abort("Invalid value for to_digit()");
+    return 0;
+  }
+  return get_all_digits()[value];
 }
 
 char *reverse(char *str) {
@@ -56,11 +242,11 @@ char *reverse(char *str) {
   return str;
 }
 
-char *drop_leading_zeros(const char *number) {
+const char *drop_leading_zeros(const char *number) {
   // If the number has leading zeros, return a pointer past these zeros
   // Might be helpful to avoid computing a result with leading zeros
   if (*number == '\0') {
-    return (char *)number;
+    return number;
   }
   while (*number == '0') {
     ++number;
@@ -68,176 +254,7 @@ char *drop_leading_zeros(const char *number) {
   if (*number == '\0') {
     --number;
   }
-  return (char *)number;
-}
-
-char *arithmatoy_add(unsigned int base, const char *lhs, const char *rhs) {
-  if (VERBOSE) {
-    fprintf(stderr, "add: entering function\n");
-  }
-
-  // Check for invalid inputs
-  if (lhs == NULL || rhs == NULL || base >= ALL_DIGIT_COUNT) {
-    return NULL;
-  }
-
-  // Drop leading zeros
-  lhs = drop_leading_zeros(lhs);
-  rhs = drop_leading_zeros(rhs);
-
-  const size_t lhs_length = strlen(lhs);
-  const size_t rhs_length = strlen(rhs);
-  const size_t max_length = lhs_length > rhs_length ? lhs_length : rhs_length;
-  char *result = init_buffer(max_length);
-
-  unsigned int carry = 0;
-
-  // Add the digits from right to left
-  for (size_t i = 0; i < max_length; ++i) {
-    const unsigned int lhs_digit =
-        i < lhs_length ? get_digit_value(lhs[lhs_length - i - 1]) : 0;
-
-    const unsigned int rhs_digit =
-        i < rhs_length ? get_digit_value(rhs[rhs_length - i - 1]) : 0;
-
-    const unsigned int sum = lhs_digit + rhs_digit + carry;
-
-    // Compute the carry and the sum
-    carry = sum / base;
-
-    // Store the result
-    result[max_length - i] = to_digit(sum % base);
-  }
-
-  // Store the last carry
-  result[0] = to_digit(carry);
-
-  return drop_leading_zeros(result);
-}
-
-char *arithmatoy_sub(unsigned int base, const char *lhs, const char *rhs) {
-  if (VERBOSE) {
-    fprintf(stderr, "sub: entering function\n");
-  }
-
-  // Check for invalid inputs
-  if (lhs == NULL || rhs == NULL || base >= ALL_DIGIT_COUNT) {
-    return NULL;
-  }
-
-  // Drop leading zeros
-  lhs = drop_leading_zeros(lhs);
-  rhs = drop_leading_zeros(rhs);
-
-  const size_t lhs_length = strlen(lhs);
-  const size_t rhs_length = strlen(rhs);
-  const size_t max_length = lhs_length > rhs_length ? lhs_length : rhs_length;
-
-  // Check if the result will be negative
-  if (lhs_length < rhs_length ||
-      (lhs_length == rhs_length && strcmp(lhs, rhs) < 0)) {
-    return NULL;
-  }
-
-  char *result = init_buffer(max_length);
-
-  int borrow = 0;
-
-  // Subtract the digits from right to left
-  for (size_t i = 0; i < max_length; ++i) {
-    const int lhs_digit =
-        (i < lhs_length) ? get_digit_value(lhs[lhs_length - i - 1]) : 0;
-    const int rhs_digit =
-        (i < rhs_length) ? get_digit_value(rhs[rhs_length - i - 1]) : 0;
-
-    int diff = lhs_digit - rhs_digit - borrow;
-
-    if (diff < 0) {
-      diff += base;
-      borrow = 1;
-    } else {
-      borrow = 0;
-    }
-
-    result[max_length - i - 1] = to_digit(diff);
-  }
-
-  // Drop leading zeros from the result
-  char *final_result = drop_leading_zeros(result);
-
-  if (final_result != result) {
-    // If drop_leading_zeros returned a pointer inside result, we need to
-    // allocate new memory for the final result
-    final_result = strdup(final_result);
-    free(result);
-  }
-
-  return final_result;
-}
-
-char *arithmatoy_mul(unsigned int base, const char *lhs, const char *rhs) {
-  if (VERBOSE) {
-    fprintf(stderr, "mul: entering function\n");
-  }
-
-  // Check for invalid inputs
-  if (lhs == NULL || rhs == NULL || base >= ALL_DIGIT_COUNT) {
-    return NULL;
-  }
-
-  // Drop leading zeros
-  lhs = drop_leading_zeros(lhs);
-  rhs = drop_leading_zeros(rhs);
-
-  const size_t lhs_length = strlen(lhs);
-  const size_t rhs_length = strlen(rhs);
-  const size_t max_length = lhs_length + rhs_length;
-
-  char *result = init_buffer(max_length);
-
-  // Initialize the result with zeros
-  memset(result, '0', max_length);
-  result[max_length] = '\0';
-
-  // Multiply each digit of lhs with each digit of rhs
-  for (size_t i = 0; i < lhs_length; ++i) {
-    unsigned int carry = 0;
-    for (size_t j = 0; j < rhs_length; ++j) {
-      // Multiply the digits
-      const unsigned int lhs_digit = get_digit_value(lhs[lhs_length - i - 1]);
-      const unsigned int rhs_digit = get_digit_value(rhs[rhs_length - j - 1]);
-      const unsigned int mul = lhs_digit * rhs_digit;
-
-      // Position in the result array
-      const size_t pos = max_length - 1 - (i + j);
-
-      // Add the product to the current position
-      unsigned int sum = get_digit_value(result[pos]) + mul + carry;
-      result[pos] = to_digit(sum % base);
-      carry = sum / base;
-    }
-
-    // If there is a carry left, add it to the next position in result
-    size_t k = max_length - 1 - (i + rhs_length);
-    while (carry > 0) {
-      unsigned int sum = get_digit_value(result[k]) + carry;
-      result[k] = to_digit(sum % base);
-      carry = sum / base;
-      k--;
-    }
-  }
-
-  // Drop leading zeros from the result
-  char *final_result = drop_leading_zeros(result);
-
-  if (final_result != result) {
-    // If drop_leading_zeros returned a pointer inside result, we need to
-    // allocate new memory for the final result
-    final_result = strdup(final_result);
-    free(result);
-  }
-
-  return final_result;
+  return number;
 }
 
 void debug_abort(const char *debug_msg) {

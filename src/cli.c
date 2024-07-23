@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "arithmatoy.h"
 #include "utils.h"
 
-int VERBOSE;
+int VERBOSE = 0;
 
 int main(int argc, const char *argv[]) {
   if (argc < 5) {
